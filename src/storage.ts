@@ -5,8 +5,8 @@ import {
   type InsertInterview,
   type Message,
   type InsertMessage,
-} from "@shared/schema";
-import { db, pool } from "./db";
+} from "../shared/schema.js";
+import { db, pool } from "./db.js";
 import { eq, asc, desc } from "drizzle-orm";
 
 export interface IStorage {
@@ -194,15 +194,9 @@ export async function initStorage(): Promise<void> {
     return;
   }
 
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "Database unavailable. Check DATABASE_URL and run npm run db:push.",
-    );
-  }
-
-  console.warn(
-    "Database unavailable — using in-memory storage for development. " +
-      "Update DATABASE_URL in .env and restart to persist data.",
+  console.error(
+    "DATABASE_URL missing or invalid — using in-memory storage. " +
+      "Set DATABASE_URL in Railway Variables for persistent data.",
   );
   storage = new MemoryStorage();
 }

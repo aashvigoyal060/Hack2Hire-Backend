@@ -1,8 +1,8 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
-import { registerRoutes } from "./routes";
-import { initStorage } from "./storage";
+import { registerRoutes } from "./routes.js";
+import { initStorage } from "./storage.js";
 import { createServer } from "http";
 
 const app = express();
@@ -16,7 +16,7 @@ declare module "http" {
 
 const corsOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
-  : ["http://localhost:5173", "http://127.0.0.1:5173"];
+  : true;
 
 app.use(
   cors({
@@ -45,9 +45,13 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+const healthPayload = () => ({
+  status: "ok",
+  timestamp: new Date().toISOString(),
 });
+
+app.get("/health", (_req, res) => res.json(healthPayload()));
+app.get("/api/health", (_req, res) => res.json(healthPayload()));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -74,7 +78,7 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
+async function bootstrap() {
   await initStorage();
 
   if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
@@ -85,21 +89,32 @@ app.use((req, res, next) => {
 
   await registerRoutes(httpServer, app);
 
-  app.use((err: Error & { status?: number; statusCode?: number }, _req: Request, res: Response, next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    console.error("Internal Server Error:", err);
-    if (res.headersSent) return next(err);
-    return res.status(status).json({ message });
+  app.use(
+    (
+      err: Error & { status?: number; statusCode?: number },
+      _req: Request,
+      res: Response,
+      next: NextFunction,
+    ) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      console.error("Internal Server Error:", err);
+      if (res.headersSent) return next(err);
+      return res.status(status).json({ message });
+    },
+  );
+}
+
+const port = parseInt(process.env.PORT || "5000", 10);
+const host = "0.0.0.0";
+
+httpServer.listen(port, host, () => {
+  log(`API server listening on ${host}:${port}`);
+
+  bootstrap().catch((err) => {
+    console.error("Bootstrap failed:", err);
+    if (process.env.NODE_ENV === "production") {
+      process.exit(1);
+    }
   });
-
-  const port = parseInt(process.env.PORT || "5000", 10);
-  const host = process.env.HOST || "0.0.0.0";
-  const onListen = () => log(`API server running on port ${port}`);
-
-  if (process.platform === "win32") {
-    httpServer.listen(port, host, onListen);
-  } else {
-    httpServer.listen({ port, host, reusePort: true }, onListen);
-  }
-})();
+});

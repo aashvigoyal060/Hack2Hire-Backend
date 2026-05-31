@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "start": "tsx src/index.ts",
-    "build": "esbuild src/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build": "esbuild src/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js",
+    "start": "node dist/index.js",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
@@ -15,7 +18,6 @@
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.7.1",
     "express": "^5.0.1",
-    "hack2hire": "file:..",
     "openai": "^6.17.0",
     "pg": "^8.16.3",
     "zod": "^3.25.76"
