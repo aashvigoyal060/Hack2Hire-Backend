@@ -216,6 +216,9 @@ Return JSON only:
         );
         try {
           result = JSON.parse(raw);
+          if (!result || !Array.isArray(result.questions)) {
+            throw new Error("Invalid AI response");
+          }
         } catch {
           result = devQuiz(skills);
         }
@@ -261,6 +264,9 @@ Return JSON:
         );
         try {
           result = JSON.parse(raw);
+          if (!result || !Array.isArray(result.problems)) {
+            throw new Error("Invalid AI response");
+          }
         } catch {
           result = devLeetcode(skills, difficulty);
         }
