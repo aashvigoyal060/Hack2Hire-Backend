@@ -85,21 +85,316 @@ function devResumeAnalysis(resumeSnippet: string, jobDescription?: string) {
 }
 
 function devQuiz(skills: string[]) {
-  return {
-    questions: skills.slice(0, 5).map((skill, i) => ({
-      id: i + 1,
-      topic: skill,
-      question: `What is a core concept teams expect you to know about ${skill}?`,
+  const skillQuestionBank: Record<string, { question: string; options: string[]; correctIndex: number; explanation: string }[]> = {
+    "JavaScript": [
+      {
+        question: "What will be the output of the following code?\n\nconsole.log(typeof null);",
+        options: ["null", "object", "undefined", "number"],
+        correctIndex: 1,
+        explanation: "In JavaScript, typeof null evaluates to 'object' due to a historic bug that's kept for compatibility."
+      },
+      {
+        question: "Which keyword declares a block-scoped variable that can be reassigned?",
+        options: ["var", "let", "const", "both let and var"],
+        correctIndex: 1,
+        explanation: "let is block-scoped and can be reassigned, unlike const (fixed value) and var (function-scoped)."
+      },
+      {
+        question: "What is a closure in JavaScript?",
+        options: [
+          "A function that takes no arguments",
+          "A function that has access to its lexical scope even when executed outside it",
+          "An object with methods",
+          "A type of loop"
+        ],
+        correctIndex: 1,
+        explanation: "Closures are a core JavaScript concept where a function remembers its lexical scope even when executed outside it."
+      }
+    ],
+    "React": [
+      {
+        question: "What is the purpose of React's useState hook?",
+        options: [
+          "To fetch data from an API",
+          "To manage local state in functional components",
+          "To handle routing",
+          "To connect to a database"
+        ],
+        correctIndex: 1,
+        explanation: "useState is a hook that allows you to add and manage local state in React functional components."
+      },
+      {
+        question: "What does JSX stand for?",
+        options: [
+          "JavaScript XML",
+          "JavaScript XHTML",
+          "Java Syntax Extension",
+          "JavaScript XHR"
+        ],
+        correctIndex: 0,
+        explanation: "JSX stands for JavaScript XML and allows writing HTML-like syntax within React components."
+      },
+      {
+        question: "Which hook is used to perform side effects in React functional components?",
+        options: ["useState", "useEffect", "useContext", "useRef"],
+        correctIndex: 1,
+        explanation: "useEffect is used to handle side effects like data fetching, DOM manipulation, subscriptions, etc."
+      }
+    ],
+    "Node.js": [
+      {
+        question: "What is the default package manager for Node.js?",
+        options: ["Yarn", "npm", "Bower", "pnpm"],
+        correctIndex: 1,
+        explanation: "npm (Node Package Manager) is the default package manager for Node.js."
+      },
+      {
+        question: "Which module in Node.js allows you to work with the file system?",
+        options: ["http", "path", "fs", "url"],
+        correctIndex: 2,
+        explanation: "The 'fs' (file system) module in Node.js provides an API for interacting with the file system."
+      },
+      {
+        question: "What is the event loop in Node.js?",
+        options: [
+          "A loop that iterates over DOM elements",
+          "A mechanism that allows Node.js to perform non-blocking I/O operations",
+          "A loop that runs only on the server side",
+          "A type of error handling"
+        ],
+        correctIndex: 1,
+        explanation: "The event loop is what allows Node.js to handle concurrent operations and perform non-blocking I/O."
+      }
+    ],
+    "SQL": [
+      {
+        question: "Which SQL command is used to retrieve data from a table?",
+        options: ["INSERT", "UPDATE", "SELECT", "DELETE"],
+        correctIndex: 2,
+        explanation: "The SELECT statement is used to fetch/retrieve data from one or more tables in SQL."
+      },
+      {
+        question: "What does SQL stand for?",
+        options: [
+          "Structured Query Language",
+          "Simple Question Language",
+          "Sequential Query Language",
+          "Structured Question Language"
+        ],
+        correctIndex: 0,
+        explanation: "SQL stands for Structured Query Language, a standard language for managing and querying relational databases."
+      },
+      {
+        question: "Which SQL clause is used to filter rows from a result set?",
+        options: ["ORDER BY", "WHERE", "GROUP BY", "HAVING"],
+        correctIndex: 1,
+        explanation: "The WHERE clause is used to filter records based on a specified condition."
+      }
+    ],
+    "Python": [
+      {
+        question: "What is the output of the following Python code?\n\nprint(2 ** 3)",
+        options: ["6", "8", "9", "5"],
+        correctIndex: 1,
+        explanation: "** is the exponentiation operator in Python; 2 ** 3 = 2*2*2 = 8."
+      },
+      {
+        question: "Which data structure in Python is mutable?",
+        options: ["Tuple", "String", "List", "Integer"],
+        correctIndex: 2,
+        explanation: "Lists in Python are mutable (can be changed after creation), unlike tuples, strings, and integers."
+      },
+      {
+        question: "What keyword is used to define a function in Python?",
+        options: ["function", "def", "fn", "lambda"],
+        correctIndex: 1,
+        explanation: "The 'def' keyword is used to define a function in Python."
+      }
+    ],
+    "TypeScript": [
+      {
+        question: "Which of the following is a valid TypeScript type annotation for a string?",
+        options: ["let x: String", "let x: string", "let x: str", "let x: text"],
+        correctIndex: 1,
+        explanation: "TypeScript uses lowercase primitive type names like string, number, boolean, etc."
+      },
+      {
+        question: "What is an interface in TypeScript?",
+        options: [
+          "A built-in function",
+          "A way to define the shape of an object",
+          "A type of loop",
+          "A database connection"
+        ],
+        correctIndex: 1,
+        explanation: "Interfaces in TypeScript are used to define the structure/shape of an object, specifying what properties and methods it should have."
+      },
+      {
+        question: "Which TypeScript utility type makes all properties of an object optional?",
+        options: ["Readonly", "Partial", "Required", "Pick"],
+        correctIndex: 1,
+        explanation: "The Partial<T> utility type constructs a type with all properties of T set to optional."
+      }
+    ]
+  };
+
+  const defaultQuestions = [
+    {
+      question: "Explain the concept of 'time complexity' in algorithms.",
       options: [
-        `Fundamental principles of ${skill}`,
-        "Unrelated database indexing only",
-        "Only UI color theory",
-        "Legal contract drafting",
+        "How long an algorithm takes to run relative to input size",
+        "The exact time an algorithm takes in seconds",
+        "The amount of memory an algorithm uses",
+        "The number of lines in the algorithm"
       ],
       correctIndex: 0,
-      explanation: `${skill} fundamentals are essential for this skillset.`,
-    })),
+      explanation: "Time complexity measures how the runtime of an algorithm scales with input size."
+    },
+    {
+      question: "What is the difference between 'pass by value' and 'pass by reference'?",
+      options: [
+        "Pass by value copies the value; pass by reference passes a pointer to the value",
+        "They are the same thing",
+        "Pass by value is faster; pass by reference is slower",
+        "Pass by value is used only in JavaScript"
+      ],
+      correctIndex: 0,
+      explanation: "Pass by value creates a copy of the value, while pass by reference passes a reference/pointer to the original value."
+    }
+  ];
+
+  const selectedQuestions: { id: number; topic: string; question: string; options: string[]; correctIndex: number; explanation: string }[] = [];
+  for (let i = 0; i < 5 && i < skills.length; i++) {
+    const skill = skills[i];
+    const questionsForSkill = skillQuestionBank[skill] || defaultQuestions;
+    const q = questionsForSkill[i % questionsForSkill.length];
+    selectedQuestions.push({
+      ...q,
+      id: i + 1,
+      topic: skill
+    });
+  }
+
+  if (selectedQuestions.length === 0) {
+    for (let i = 0; i < 5; i++) {
+      selectedQuestions.push({
+        ...defaultQuestions[i % defaultQuestions.length],
+        id: i + 1,
+        topic: "General Programming"
+      });
+    }
+  }
+
+  return {
+    questions: selectedQuestions
   };
+}
+
+function devEnglishAptitude() {
+  const questions = [
+    {
+      id: 1,
+      topic: "Grammar",
+      question: "Choose the correct sentence:",
+      options: [
+        "She don't have a car.",
+        "She doesn't have a car.",
+        "She don't has a car.",
+        "She doesn't has a car."
+      ],
+      correctIndex: 1,
+      explanation: "With 'she', we use 'doesn't' and the base form of the verb ('have')."
+    },
+    {
+      id: 2,
+      topic: "Vocabulary",
+      question: "What is the synonym of 'ephemeral'?",
+      options: ["Permanent", "Long-lasting", "Short-lived", "Expensive"],
+      correctIndex: 2,
+      explanation: "Ephemeral means lasting for a very short time."
+    },
+    {
+      id: 3,
+      topic: "Reading Comprehension",
+      question: "What does the idiom 'break a leg' mean?",
+      options: [
+        "To get injured",
+        "Good luck",
+        "To stop working",
+        "To take a break"
+      ],
+      correctIndex: 1,
+      explanation: "'Break a leg' is a common way to wish someone good luck, especially before a performance or interview."
+    },
+    {
+      id: 4,
+      topic: "Grammar",
+      question: "Which sentence uses the correct tense?",
+      options: [
+        "I am working here for 5 years.",
+        "I have been working here for 5 years.",
+        "I works here for 5 years.",
+        "I will worked here for 5 years."
+      ],
+      correctIndex: 1,
+      explanation: "The present perfect continuous (have been working) is used to talk about an action that started in the past and still continues."
+    },
+    {
+      id: 5,
+      topic: "Vocabulary",
+      question: "What is the antonym of 'transient'?",
+      options: ["Temporary", "Permanent", "Fleeting", "Brief"],
+      correctIndex: 1,
+      explanation: "Transient means temporary; its antonym is permanent."
+    }
+  ];
+  return { questions };
+}
+
+function devMathAptitude() {
+  const questions = [
+    {
+      id: 1,
+      topic: "Arithmetic",
+      question: "If a shirt costs $40 after a 20% discount, what was its original price?",
+      options: ["$48", "$50", "$52", "$45"],
+      correctIndex: 1,
+      explanation: "Let X be original price. 80% of X = $40 → 0.8X = $40 → X = $50."
+    },
+    {
+      id: 2,
+      topic: "Number Series",
+      question: "What is the next number in the series: 2, 6, 12, 20, ___?",
+      options: ["30", "28", "25", "32"],
+      correctIndex: 0,
+      explanation: "Pattern: 1×2, 2×3, 3×4, 4×5 → next is 5×6 = 30."
+    },
+    {
+      id: 3,
+      topic: "Algebra",
+      question: "If 3x + 7 = 22, what is the value of x?",
+      options: ["4", "5", "6", "7"],
+      correctIndex: 1,
+      explanation: "3x = 22-7 → 3x=15 → x=5."
+    },
+    {
+      id: 4,
+      topic: "Percentages",
+      question: "What is 15% of 200?",
+      options: ["25", "30", "35", "40"],
+      correctIndex: 1,
+      explanation: "15% of 200 = 0.15 × 200 = 30."
+    },
+    {
+      id: 5,
+      topic: "Probability",
+      question: "What is the probability of rolling a 3 with a single fair die?",
+      options: ["1/2", "1/3", "1/6", "1/4"],
+      correctIndex: 2,
+      explanation: "A die has 6 faces, each with equal probability: 1/6."
+    }
+  ];
+  return { questions };
 }
 
 function devLeetcode(skills: string[], difficulty: string) {
@@ -279,6 +574,28 @@ Return JSON:
       }
       console.error(err);
       res.status(500).json({ message: "Failed to generate problems" });
+    }
+  });
+
+  // English Aptitude endpoint
+  app.post("/api/practice/english", async (req, res) => {
+    try {
+      const result = devEnglishAptitude();
+      return res.json(result);
+    } catch (err) {
+      console.error(err);
+      return res.json(devEnglishAptitude());
+    }
+  });
+
+  // Math Aptitude endpoint
+  app.post("/api/practice/math", async (req, res) => {
+    try {
+      const result = devMathAptitude();
+      return res.json(result);
+    } catch (err) {
+      console.error(err);
+      return res.json(devMathAptitude());
     }
   });
 }
