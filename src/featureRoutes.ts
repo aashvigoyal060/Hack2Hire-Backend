@@ -1,11 +1,8 @@
 import type { Express, Request, Response } from "express";
 import multer from "multer";
-import { createRequire } from "module";
 import OpenAI from "openai";
 import { z } from "zod";
-
-const require = createRequire(import.meta.url);
-const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
+import pdfParse from "pdf-parse";
 
 const upload = multer({
   storage: multer.memoryStorage(),
